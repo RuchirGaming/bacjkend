@@ -15,7 +15,6 @@ if (!fs.existsSync(filesDir)) {
     fs.mkdirSync(filesDir);
 }
 
-// ROUTE 1: Receive string data token and spin up worker engine
 app.post('/api/request-apk', (req, res) => {
     const userQuery = req.body.query;
 
@@ -27,11 +26,17 @@ app.post('/api/request-apk', (req, res) => {
 
     exec(`python fetch_and_split_dynamic.py "${safeQuery}"`, (error, stdout, stderr) => {
         if (error) {
-            console.error(`Execution error: ${error.message}`);
+            console.error(`System error: ${error.message}`);
             return res.status(500).json({ error: "External worker process encountered an execution failure." });
         }
 
         const lines = stdout.trim().split('\n');
+        
+        // Handle explicit application-level failure gracefully
+        if (lines.includes("ERROR_NOT_FOUND")) {
+            return res.status(404).json({ error: "Package ID not found. Ensure you use explicit format (e.g. com.spotify.music)." });
+        }
+
         const packageLine = lines.find(line => line.startsWith("PACKAGE:"));
         const iconLine = lines.find(line => line.startsWith("ICON:"));
 
@@ -51,7 +56,6 @@ app.post('/api/request-apk', (req, res) => {
     });
 });
 
-// ROUTE 2: Stream back binary chunk sequences seamlessly to browser
 app.get('/api/download/:packageName', (req, res) => {
     const packageName = req.params.packageName;
     const targetFolder = path.join(__dirname, 'files', packageName);

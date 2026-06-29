@@ -1,7 +1,7 @@
 import sys
 import os
 
-# Use the correct Aptoide package class structure
+# Use the correct internal provider module from PyAPKDownloader
 from PyAPKDownloader.aptoide import Aptoide
 
 def main():
@@ -9,22 +9,24 @@ def main():
         print("ERROR: No search query provided.")
         sys.exit(1)
         
-    query = sys.argv[1].strip()
-    downloader = Aptoide()
-    package_name = query 
+    # The user input string containing the package name target
+    package_name = sys.argv[1].strip()
     
-    # Send values to standard out so server.js can parse them
+    # Send values directly to Node stdout immediately before starting heavy download
     print(f"PACKAGE:{package_name}")
     print(f"ICON:https://img.icons8.com/color/96/android-os.png")
     sys.stdout.flush()
     
+    downloader = Aptoide()
+    
     try:
+        # Resolve path structures inside Render container
         output_dir = os.path.join(os.path.dirname(__file__), 'files', package_name)
         os.makedirs(output_dir, exist_ok=True)
         
         temp_apk_path = os.path.join(output_dir, "downloading.tmp")
         
-        # Download from the store package engine
+        # Download targeted file from marketplace repository
         downloader.download_by_package_name(
             package_name=package_name, 
             file_name="downloading", 
@@ -33,16 +35,16 @@ def main():
             limit=30
         )
         
-        # Check and rename file if downloaded to working directory
+        # Track where the downloader placed the compiled output binary
         downloaded_file = os.path.join(os.getcwd(), "downloading.apk")
         if os.path.exists(downloaded_file):
             os.rename(downloaded_file, temp_apk_path)
         elif not os.path.exists(temp_apk_path):
             temp_apk_path = os.path.join(os.getcwd(), "downloading")
             if not os.path.exists(temp_apk_path):
-                raise FileNotFoundError("Target package couldn't be extracted.")
+                raise FileNotFoundError("Target package couldn't be extracted from provider registry.")
 
-        # Chunk out the file to save server RAM
+        # Chunk out the file to save server RAM (50MB slices)
         chunk_size = 50 * 1024 * 1024  
         
         with open(temp_apk_path, 'rb') as infile:
@@ -60,6 +62,7 @@ def main():
                 
                 chunk_num += 1
                 
+        # Clean up large file from storage container disk
         if os.path.exists(temp_apk_path):
             os.remove(temp_apk_path)
             

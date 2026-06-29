@@ -2,8 +2,8 @@
 # exit on error
 set -o errexit
 
-# Install Node.js production dependencies
-npm install
+# Install production dependencies
+npm install express cors
 
-# Install Python environment dependencies required by the worker script
+# Install Python environment dependencies
 pip install PyAPKDownloader

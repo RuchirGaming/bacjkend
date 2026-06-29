@@ -1,9 +1,4 @@
 #!/usr/bin/env bash
-# exit on error
 set -o errexit
-
-# Install production dependencies
-npm install express cors
-
-# Install Python environment dependencies
+npm install express cors google-play-scraper
 pip install PyAPKDownloader
